@@ -24,43 +24,95 @@ our %SPEC;
 
 $SPEC{num_to_cfbase32} = {
     v => 1.1,
-    summary => "Convert an integer decimal number to Crockford's Base 32 encoding",
+    summary => "Convert integer decimal number(s) to Crockford's Base 32 encoding",
     args => {
-        num => {
-            schema => 'int*',
+        nums => {
+            schema => ['array*', of=>'int*'],
             pos => 0,
-            cmdline_src => 'stdin_or_args',
+            slurpy => 1,
         },
     },
 };
 sub num_to_cfbase32 {
     require Encode::Base32::Crockford;
 
-    defined(my $num = $args{num}) or return [400, "Please specify number"];
-    $num = int($num);
+    my %args = @_;
+    my $nums;
+    defined($nums = $args{nums}) && @$nums or return [400, "Please specify one or more numbers"];
 
-    [200, "OK", Encode::Base32::Crockford::base32_encode($num)];
+    my @res;
+    for my $num (@{ $nums }) {
+        $num = int($num);
+        push @res, Encode::Base32::Crockford::base32_encode($num);
+    }
+    [200, "OK", \@res];
 }
 
 $SPEC{cfbase32_to_num} = {
     v => 1.1,
     summary => "Convert Crockford's Base 32 encoding to integer decimal number",
     args => {
-        str => {
-            schema => 'str*',
+        strs => {
+            schema => ['array*', of=>'int*'],
             pos => 0,
-            cmdline_src => 'stdin_or_args',
+            slurpy => 1,
         },
     },
 };
-sub num_to_cfbase32 {
+sub cfbase32_to_num {
     require Encode::Base32::Crockford;
 
-    defined(my $str = $args{str}) or return [400, "Please specify Base 32 number"];
+    my %args = @_;
+    my $strs;
+    defined($strs = $args{strs}) && @$strs or return [400, "Please specify one or more Base32 encoded strings"];
 
-    [200, "OK", Encode::Base32::Crockford::base32_decode($str)];
+    my @res;
+    for my $str (@{ $strs }) {
+        push @res, Encode::Base32::Crockford::base32_decode($str);
+    }
+    [200, "OK", \@res];
 }
 
+$SPEC{cfbase32_encode} = {
+    v => 1.1,
+    summary => "Encode string to Crockford's Base32 encoding",
+    args => {
+        str => {
+            schema => 'str*',
+            pos => 0,
+            cmdline_src => 'stdin_or_files',
+        },
+    },
+};
+sub cfbase32_encode {
+    require Convert::Base32::Crockford;
+
+    my %args = @_;
+    my $str = $args{str};
+
+    [200, "OK", Convert::Base32::Crockford::encode_base32($str)];
+}
+
+$SPEC{cfbase32_decode} = {
+    v => 1.1,
+    summary => "Decode Crockford's Base32 encoding",
+    args => {
+        str => {
+            schema => 'str*',
+            pos => 0,
+            cmdline_src => 'stdin_or_files',
+        },
+    },
+};
+sub cfbase32_decode {
+    require Convert::Base32::Crockford;
+
+    my %args = @_;
+    my $str = $args{str};
+    $str =~ s/[^A-TV-Z0-9]+//ig;
+
+    [200, "OK", Convert::Base32::Crockford::decode_base32($str)];
+}
 
 1;
 # ABSTRACT: Utilities related to Crockford's Base 32 encoding
