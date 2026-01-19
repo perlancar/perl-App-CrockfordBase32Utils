@@ -53,7 +53,7 @@ $SPEC{cfbase32_to_num} = {
     summary => "Convert Crockford's Base 32 encoding to integer decimal number",
     args => {
         strs => {
-            schema => ['array*', of=>'int*'],
+            schema => ['array*', of=>'str*'],
             pos => 0,
             slurpy => 1,
         },
