@@ -96,7 +96,7 @@ sub cfbase32_encode {
 
 $SPEC{cfbase32_decode} = {
     v => 1.1,
-    summary => "Decode Crockford's Base32 encoding",
+    summary => "Decode Crockford's Base32-encoded string",
     args => {
         str => {
             schema => 'str*',
