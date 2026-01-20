@@ -122,16 +122,18 @@ my @cfbase32_digits_x0 = qw(1 2 3 4 5 6 7 8 9
                             A B C D E F G H J K
                             M N P Q R S T V W X Y Z);
 sub _gen_rand_cfbase32 {
+    require Math::Random::Secure;
+
     my ($min_len, $max_len, $zero_prefix) = @_;
-    my $len = int($min_len + rand()*($max_len - $min_len + 1));
+    my $len = $min_len + Math::Random::Secure::irand($max_len - $min_len + 1);
 
     my @digits;
     for my $i (1..$len) {
         my $digit;
         if ($i == 1 && !$zero_prefix) {
-            $digit = $cfbase32_digits_x0[rand @cfbase32_digits_x0];
+            $digit = $cfbase32_digits_x0[Math::Random::Secure::irand(scalar @cfbase32_digits_x0)];
         } else {
-            $digit = $cfbase32_digits[rand @cfbase32_digits];
+            $digit = $cfbase32_digits[Math::Random::Secure::irand(scalar @cfbase32_digits)];
         }
         push @digits, $digit;
     }
@@ -246,10 +248,16 @@ MARKDOWN
             argv => [qw/--len 12 -n35 --nozero-prefix/],
             test => 0,
         },
+        {
+            summary => 'Generate a formatted random code',
+            argv => ['-f', '###-###-###', '-l9'],
+            test => 0,
+        },
     ],
 };
 sub cfbase32_rand {
     require Encode::Base32::Crockford;
+    require Math::Random::Secure;
     require String::FillCharTemplate;
 
     my %args = @_;
@@ -285,7 +293,7 @@ sub cfbase32_rand {
         if ($gen) {
             $enc = $gen->();
         } else {
-            my $num = int(rand() * ($to - $from + 1) + $from);
+            my $num = $from + Math::Random::Secure::irand($to - $from + 1);
             $enc = Encode::Base32::Crockford::base32_encode($num);
         }
         if (defined $args{fill_char_template}) {
