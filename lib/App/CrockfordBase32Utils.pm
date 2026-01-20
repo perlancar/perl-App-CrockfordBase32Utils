@@ -191,6 +191,7 @@ Note that the first digit can still be 0 unless zero_prefix is set to false.
 
 MARKDOWN
             schema => ['int*', min=>1],
+            cmdline_aliases => {l=>{}},
             tags => ['category:range'],
         },
 
