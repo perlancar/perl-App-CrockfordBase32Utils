@@ -203,12 +203,26 @@ MARKDOWN
             tags => ['category:quantity'],
         },
 
+        fill_char_template => {
+            schema => 'str*',
+            summary => 'Provide a template for formatting number, e.g. "###-###-###"',
+            description => <<'MARKDOWN',
+
+See <pm:String::FillCharTemplate> for more details.
+
+MARKDOWN
+            cmdline_aliases => {f=>{}},
+            tags => ['category:output'],
+        },
         unique => {
             schema => 'bool*',
             summary => 'Whether to avoid generating previously generated numbers',
+            cmdline_aliases => {u=>{}},
+            tags => ['category:output'],
         },
         prev_nums_file => {
             schema => 'filename*',
+            tags => ['category:output'],
         },
     },
     args_rels => {
@@ -236,6 +250,7 @@ MARKDOWN
 };
 sub cfbase32_rand {
     require Encode::Base32::Crockford;
+    require String::FillCharTemplate;
 
     my %args = @_;
     my ($gen, $from, $to, $fmt);
@@ -272,6 +287,9 @@ sub cfbase32_rand {
         } else {
             my $num = int(rand() * ($to - $from + 1) + $from);
             $enc = Encode::Base32::Crockford::base32_encode($num);
+        }
+        if (defined $args{fill_char_template}) {
+            $enc = String::FillCharTemplate::fill_char_template($args{fill_char_template}, $enc);
         }
         push @res, $enc;
     }
