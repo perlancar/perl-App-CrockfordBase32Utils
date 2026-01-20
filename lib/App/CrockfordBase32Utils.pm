@@ -222,12 +222,12 @@ MARKDOWN
     },
     examples => [
         {
-            summary => 'Generate 5 random numbers from 12 digits each, first digit(s) can be 0',
+            summary => 'Generate 35 random numbers from 12 digits each, first digit(s) can be 0',
             argv => [qw/--len 12 -n35/],
             test => 0,
         },
         {
-            summary => 'Generate 5 random numbers from 12 digits each, first digit(s) CANNOT be 0',
+            summary => 'Generate 35 random numbers from 12 digits each, first digit(s) CANNOT be 0',
             argv => [qw/--len 12 -n35 --nozero-prefix/],
             test => 0,
         },
