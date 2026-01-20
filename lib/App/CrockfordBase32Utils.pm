@@ -115,6 +115,8 @@ sub cfbase32_decode {
     [200, "OK", Convert::Base32::Crockford::decode_base32($str)];
 }
 
+my $cfbase32_digit_re = /[0-9A-HJ-NP-TV-Z]/;
+
 my @cfbase32_digits = qw(0 1 2 3 4 5 6 7 8 9
                          A B C D E F G H J K
                          M N P Q R S T V W X Y Z);
@@ -222,9 +224,19 @@ MARKDOWN
             cmdline_aliases => {u=>{}},
             tags => ['category:output'],
         },
-        prev_nums_file => {
+        prev_file => {
             schema => 'filename*',
+            description => <<'MARKDOWN',
+
+Load list of previous numbers from the specified file.
+
+The file will be read per-line. Empty lines and lines starting with "#" will be
+skipped. Non-digits will be removed first. Lowercase will be converted to
+uppercase. I L will be normalized to 1, O will be normalized to 0.
+
+MARKDOWN
             tags => ['category:output'],
+            cmdline_aliases => {p=>{}},
         },
     },
     args_rels => {
@@ -287,8 +299,21 @@ sub cfbase32_rand {
     }
     log_trace "from: %s   to: %s", $from, $to;
 
+    my %seen;
+    if ($args{prev_file}) {
+        open my $fh, "<", $args{prev_file} or return [500, "Can't open prev_file '$args{prev_file}': $!"];
+        while (defined(my $line = <$fh>)) {
+            chomp $line;
+            $line = uc($line);
+            $line =~ s/^($cfbase32_digit_re)+//g;
+            next unless length $line;
+            $seen{$line}++;
+        }
+    }
+
     my @res;
-    for my $i (1 .. $args{num}) {
+    my $i = 1;
+    while ($i <= $args{num}) {
         my $enc;
         if ($gen) {
             $enc = $gen->();
@@ -296,10 +321,14 @@ sub cfbase32_rand {
             my $num = $from + Math::Random::Secure::irand($to - $from + 1);
             $enc = Encode::Base32::Crockford::base32_encode($num);
         }
+        if ($args{unique} && $seen{$enc}++) {
+            next;
+        }
         if (defined $args{fill_char_template}) {
             $enc = String::FillCharTemplate::fill_char_template($args{fill_char_template}, $enc);
         }
         push @res, $enc;
+        $i++;
     }
 
     [200, "OK", \@res];
