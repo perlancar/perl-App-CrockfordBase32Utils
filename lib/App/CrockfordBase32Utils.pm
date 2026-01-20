@@ -115,7 +115,8 @@ sub cfbase32_decode {
     [200, "OK", Convert::Base32::Crockford::decode_base32($str)];
 }
 
-my $cfbase32_digit_re = /[0-9A-HJ-NP-TV-Z]/;
+my $cfbase32_digit_re    = qr/[0-9A-HJ-NP-TV-Z]/;
+my $cfbase32_nondigit_re = qr/[^0-9A-HJ-NP-TV-Z]/;
 
 my @cfbase32_digits = qw(0 1 2 3 4 5 6 7 8 9
                          A B C D E F G H J K
@@ -278,14 +279,14 @@ sub cfbase32_rand {
         if ($args{len} >= 9) {
             $gen = sub { _gen_rand_cfbase32($args{len}, $args{len}, $args{zero_prefix}) };
         } else {
-            $from = 32 ** ($args{len} - 1);
+            $from = 32 ** ($args{len} - 1); $from = 0 if $from == 1;
             $to = 32 ** ($args{len}) - 1;
         }
     } elsif (defined($args{min_len})) {
         if ($args{min_len} >= 9 || $args{max_len} >= 9) {
             $gen = sub { _gen_rand_cfbase32($args{min_len}, $args{max_len}, $args{zero_prefix}) };
         } else {
-            $from = 32 ** int($args{min_len} - 1);
+            $from = 32 ** int($args{min_len} - 1); $from = 0 if $from == 1;
             $to   = 32 ** int($args{max_len}) - 1;
         }
     } elsif (defined($args{min_int})) {
@@ -305,10 +306,11 @@ sub cfbase32_rand {
         while (defined(my $line = <$fh>)) {
             chomp $line;
             $line = uc($line);
-            $line =~ s/^($cfbase32_digit_re)+//g;
+            $line =~ s/^($cfbase32_nondigit_re)+//g;
             next unless length $line;
             $seen{$line}++;
         }
+        #use DD; dd \%seen;
     }
 
     my @res;
@@ -319,6 +321,7 @@ sub cfbase32_rand {
             $enc = $gen->();
         } else {
             my $num = $from + Math::Random::Secure::irand($to - $from + 1);
+            #say "from=$from, to=$to, num=$num";
             $enc = Encode::Base32::Crockford::base32_encode($num);
         }
         if ($args{unique} && $seen{$enc}++) {
