@@ -146,6 +146,12 @@ sub _gen_rand_cfbase32 {
 $SPEC{cfbase32_rand} = {
     v => 1.1,
     summary => "Generate one or more Crockford Base 32 numbers",
+    description => <<'MARKDOWN',
+
+This routine uses <pm:Math::Random::Secure> for cryptographically secure random
+number generator.
+
+MARKDOWN
     args => {
         zero_prefix => {
             schema => 'bool*',
